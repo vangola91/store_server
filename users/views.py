@@ -42,7 +42,6 @@ class UserProfileView(TitleMixin, UpdateView):
     #     context['baskets'] = Basket.objects.filter(user=self.object)
     #     return context
 
-
 class EmailVerificationView(TitleMixin, TemplateView):
     title = 'Store - Подтверждение электронний почты'
     template_name = 'users/email_verification.html'
