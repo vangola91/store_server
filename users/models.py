@@ -1,8 +1,8 @@
-from django.contrib.auth.models import AbstractUser
-from django.db import models
-from django.core.mail import send_mail
-from django.urls import reverse
 from django.conf import settings
+from django.contrib.auth.models import AbstractUser
+from django.core.mail import send_mail
+from django.db import models
+from django.urls import reverse
 
 
 class User(AbstractUser):
@@ -21,7 +21,8 @@ class EmailVerification(models.Model):
 
 
     def send_verification_email(self):
-        link = reverse('users:email_verification', kwargs={'email':self.user.email, 'code':self.code})
+
+        link =reverse('users:email_verification',kwargs={'email':self.user.email, 'code':self.code})
         verification_link = f'{settings.DOMAIN_NAME}{link}'
         subjact = f"Подверждение учетной записи для {self.user.username}"
         message = 'Для подверждения учотной записи для {} перейдите по ссылке: {}'.format(

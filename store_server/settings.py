@@ -9,24 +9,53 @@ https://docs.djangoproject.com/en/4.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
-
+import os
+import environ
 from pathlib import Path
+
+
+env = environ.Env(
+    DEBUG=(bool),
+    SECRET_KEY=(str),
+    DOMAIN_NAME=(str),
+
+    REDIS_HOST=(str),
+    REDIS_PORT=(str),
+
+    DATABASES_NAME=(str),
+    DATABASES_USER=(str),
+    DATABASES_PASSWORD=(str),
+    DATABASES_HOST=(str),
+    DATABASES_PORT=(str),
+
+    EMAIL_HOST=(str),
+    EMAIL_PORT=(str),
+    EMAIL_USE_TLS=(bool),
+    EMAIL_HOST_USER=(str),
+    EMAIL_HOST_PASSWORD=(str),
+
+    STRIPE_PUBLIC_KEY=(str),
+    STRIPE_SECRET_KEY=(str),
+    STRIPE_WEBHOOK_SECRET=(str),
+)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
+environ.Env.read_env(BASE_DIR / '.env')
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-m5bxb2&oegsrun7k$7_j*j)2)%5vi*jxi6_$v%t6&3u!mox+@0'
+SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env('DEBUG')
 
 ALLOWED_HOSTS = ['*']
 
-DOMAIN_NAME = 'http://127.0.0.1:8000'
+DOMAIN_NAME = env('DOMAIN_NAME')
 
 # Application definition
 
@@ -37,9 +66,21 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
+    'django.contrib.humanize',
+    'django_extensions',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    # 'allauth.socialaccount.providers.google',
+    # 'allauth.socialaccount.providers.yandex',
+    'allauth.socialaccount.providers.github',
+    'debug_toolbar',
+
 
     'products',
     'users',
+    'orders'
 ]
 
 MIDDLEWARE = [
@@ -50,6 +91,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 
 ROOT_URLCONF = 'store_server.urls'
@@ -57,7 +99,7 @@ ROOT_URLCONF = 'store_server.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates']
+        'DIRS': [BASE_DIR / 'orders/templates']
         ,
         'APP_DIRS': True,
         'OPTIONS': {
@@ -74,15 +116,43 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'store_server.wsgi.application'
 
-# Database
-# https://docs.djangoproject.com/en/4.1/ref/settings/#databases
+
+
+
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'django2',
+        'USER': 'postgres',
+        'PASSWORD': '1',
+        'HOST': '127.0.0.1',
+        'PORT': '5432',
     }
 }
+
+INTERNAL_IPS = [
+
+    "127.0.0.1",
+    'localhost',
+]
+
+REDIS_HOST = env('REDIS_HOST')
+REDIS_PORT = env('REDIS_PORT')
+
+# Caches
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': f'redis://{REDIS_HOST}:{REDIS_PORT}/1',
+        'OPTIONS':{
+             'CLIENT_CLASS':'django_redis.client.DefaultClient',
+        }
+    }
+}
+
+
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
@@ -101,23 +171,21 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
-
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'vangola91@gmail.com'
-EMAIL_HOST_PASSWORD = 'jxdbtymvwqhpoffb'
-
-
-
+if DEBUG:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+else:
+    EMAIL_HOST = env('EMAIL_HOST')
+    EMAIL_PORT = env('EMAIL_PORT')
+    EMAIL_USE_TLS = env('EMAIL_USE_TLS')
+    EMAIL_HOST_USER = env('EMAIL_HOST_USER')
+    EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
 
 LANGUAGE_CODE = 'ru-ru'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Tashkent'
 
 USE_I18N = True
 
@@ -142,3 +210,32 @@ AUTH_USER_MODEL = 'users.User'
 LOGIN_URL = '/users/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
+
+
+# OAuth
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+
+]
+
+SITE_ID = 2
+
+SOCIALACCOUNT_PROVIDERS = {
+
+    'github': {
+        'SCOPE': [
+            'user',
+        ],
+    }
+}
+
+
+CELERY_BROKER_URL = f'redis://{REDIS_HOST}:{REDIS_PORT}'
+CELERY_RESULT_BACKEND = f'redis://{REDIS_HOST}:{REDIS_PORT}'
+
+
+STRIPE_PUBLIC_KEY = env('STRIPE_PUBLIC_KEY')
+STRIPE_SECRET_KEY = env('STRIPE_SECRET_KEY')
+# STRIPE_WEBHOOK_SECRET = 'acct_1MZWARFPZ9NHc8u7'
+STRIPE_WEBHOOK_SECRET = env('STRIPE_WEBHOOK_SECRET')

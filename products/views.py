@@ -1,13 +1,14 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.shortcuts import HttpResponseRedirect
-from products.models import Product, ProductCategory, Basket
-from django.db.models import F
 from django.contrib.auth.decorators import login_required
-# from django.core.paginator import Paginator
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.cache import cache
+from django.db.models import F
+from django.shortcuts import HttpResponseRedirect
 from django.views.generic.base import TemplateView
-from django.views.generic.list import ListView
 from django.views.generic.edit import CreateView
+from django.views.generic.list import ListView
+
 from common.views import TitleMixin
+from products.models import Basket, Product, ProductCategory
 
 
 class IndexView(TitleMixin, TemplateView):
